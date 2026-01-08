@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy import (
     Column,
     Integer,
@@ -6,13 +7,14 @@ from sqlalchemy import (
     DateTime,
     Index
 )
+from sqlalchemy.dialects.postgresql import UUID
 from core.database import Base
 from utils.date_time import utc_now
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
 
     # Identity
     first_name = Column(String(100), nullable=False)
