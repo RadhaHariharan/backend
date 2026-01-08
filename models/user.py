@@ -1,7 +1,6 @@
 import uuid
 from sqlalchemy import (
     Column,
-    Integer,
     String,
     SmallInteger,
     DateTime,
@@ -26,13 +25,8 @@ class User(Base):
     status = Column(SmallInteger, default=1, nullable=False)
 
     # Audit timestamps
-    created_at = Column(DateTime, default=utc_now, nullable=False)
-    updated_at = Column(
-        DateTime,
-        default=utc_now,
-        onupdate=utc_now,
-        nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     __table_args__ = (
         Index("ix_users_email_status", "email", "status"),

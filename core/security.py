@@ -1,14 +1,8 @@
-from passlib.context import CryptContext
 from jose import jwt
-from datetime import datetime, timedelta
+from datetime import timedelta
 from core.config import settings
 from utils.date_time import utc_now
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def verify_password(plain, hashed):
-    truncated_plain = plain[:72]
-    return pwd_context.verify(truncated_plain, hashed)
+import bcrypt
 
 def create_access_token(data: dict):
     payload = data.copy()
@@ -23,5 +17,9 @@ def create_refresh_token(user_id: int):
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def hash_password(password: str) -> str:
-    truncated_password = password[:72]
-    return pwd_context.hash(truncated_password)
+    salt = bcrypt.gensalt()
+    hashedBytes = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashedBytes.decode('utf-8')
+
+def verify_password(plain, hashed):
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
