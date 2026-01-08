@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     DB_NAME: str
 
     # Security
-    SECRET_KEY: str
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
 
     class Config:

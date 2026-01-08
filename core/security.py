@@ -1,3 +1,4 @@
+import uuid
 from jose import jwt
 from datetime import timedelta
 from core.config import settings
@@ -6,15 +7,18 @@ import bcrypt
 
 def create_access_token(data: dict):
     payload = data.copy()
-    payload["exp"] = utc_now + timedelta(minutes=15)
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    for k, v in payload.items():
+        if isinstance(v, uuid.UUID):
+            payload[k] = str(v)
+    payload["exp"] = utc_now() + timedelta(minutes=15)
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-def create_refresh_token(user_id: int):
+def create_refresh_token(user_id: uuid.UUID):
     payload = {
-        "sub": user_id,
-        "exp": utc_now + timedelta(days=30)
+        "sub": str(user_id),
+        "exp": utc_now() + timedelta(days=30)
     }
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
