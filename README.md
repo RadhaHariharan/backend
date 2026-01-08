@@ -34,12 +34,6 @@ If a `requirements.txt` is present, install with:
 pip install -r requirements.txt
 ```
 
-If no `requirements.txt` is provided, install the common dependencies used by this project:
-
-```bash
-pip install fastapi uvicorn python-jose passlib[bcrypt] sqlalchemy pydantic python-dotenv bcrypt
-```
-
 To generate `requirements.txt` from your active environment (after installing everything you need):
 
 ```bash
