@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import get_db
 from schemas.auth import LoginRequest, TokenResponse
@@ -13,12 +13,12 @@ router = APIRouter(
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(
+async def login(
     payload: LoginRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
-    Login endpoint:
+    Async Login endpoint:
     - verifies email & password
     - returns access + refresh tokens
     - uses centralized response structure
@@ -26,15 +26,16 @@ def login(
     auth_service = AuthService(db)
 
     try:
-        tokens = auth_service.login(
+        tokens = await auth_service.login(
             email=payload.email,
             password=payload.password
         )
-        # Success response
+        # --- Success response ---
         return send_custom_response(tokens, success_message="Login successful")
+
     except ValueError:
-        # Invalid credentials
+        # --- Invalid credentials ---
         raise HttpError(401, "Invalid email or password", "INVALID_CREDENTIALS")
     except Exception as e:
-        # Any other unexpected error
+        # --- Any other unexpected error ---
         raise HttpError(500, "Internal Server Error", str(e))

@@ -1,7 +1,5 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from sqlalchemy.pool import QueuePool
-
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 from core.config import settings
 
 
@@ -9,8 +7,9 @@ class Base(DeclarativeBase):
     pass
 
 
+# Change to async driver
 DATABASE_URL = (
-    f"postgresql+psycopg2://"
+    f"postgresql+asyncpg://"  # ← Changed from psycopg2
     f"{settings.DB_USER}:"
     f"{settings.DB_PASSWORD}@"
     f"{settings.DB_HOST}:"
@@ -19,9 +18,9 @@ DATABASE_URL = (
 )
 
 
-engine = create_engine(
+# Use async engine
+engine = create_async_engine(
     DATABASE_URL,
-    poolclass=QueuePool,
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,
@@ -29,8 +28,11 @@ engine = create_engine(
 )
 
 
-SessionLocal = sessionmaker(
+# Use async session maker
+SessionLocal = async_sessionmaker(
     bind=engine,
+    class_=AsyncSession,
     autoflush=False,
-    autocommit=False
+    autocommit=False,
+    expire_on_commit=False
 )
