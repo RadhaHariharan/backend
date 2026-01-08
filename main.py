@@ -6,7 +6,14 @@ from utils.response import send_error_response
 app = FastAPI()
 
 # --- Define your routes categories here ---
-public_routes = ["/api/v1/auth/login"]
+public_routes = [
+    "/api/v1/auth/login",
+    "/api/v1/auth/register",
+    "/openapi.json",
+    "/docs",
+    "/redoc"
+]
+
 refresh_token_only_routes = []
 
 # --- Middleware ---
