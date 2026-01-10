@@ -12,6 +12,7 @@ greenlet==3.3.0
 h11==0.16.0
 httptools==0.7.1
 idna==3.11
+loguru==0.7.3
 passlib==1.7.4
 pyasn1==0.6.1
 pydantic==2.12.5

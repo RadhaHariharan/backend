@@ -1,6 +1,9 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
+    # Environment
+    ENVIRONMENT: str = "dev"  # dev or prod
+
     # Database
     DB_USER: str
     DB_PASSWORD: str
