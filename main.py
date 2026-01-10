@@ -1,11 +1,12 @@
 import uvicorn
 from fastapi import FastAPI, Request
 from api.v1 import router as v1_router
+from core.exception_handlers import setup_exception_handlers, logger
 from core.middleware.auth_middleware import AuthMiddleware
 from core.config import settings
 from utils.response import send_error_response
-from core.logger import logger
 
+setup_exception_handlers()
 app = FastAPI()
 
 # --- Define your routes categories here ---
@@ -29,6 +30,9 @@ app.add_middleware(
 # --- Global exception handler ---
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception(
+        f"Unhandled exception on {request.method} {request.url.path}: {str(exc)}"
+    )
     return send_error_response(exc)
 
 # --- API Routes ---
