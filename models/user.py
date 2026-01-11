@@ -12,6 +12,7 @@ from utils.date_time import utc_now
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {"schema": "public"}
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
 
@@ -30,6 +31,7 @@ class User(Base):
 
     __table_args__ = (
         Index("ix_users_email_status", "email", "status"),
+        {"schema": "public"}
     )
 
     def __repr__(self) -> str:

@@ -1,118 +1,237 @@
-# Backend — Setup & Project Overview
+# FastAPI Multi-Tenant Organization System
 
-This document explains how to create a virtual environment, install dependencies, run the FastAPI app, and describes each folder in the project so new contributors can get started quickly.
+A complete multi-tenant application backend built with **FastAPI**, **SQLAlchemy**, and **PostgreSQL**. Supports flexible user management with dynamic organization creation and role-based access control.
 
-## Prerequisites
-- Python 3.11+ installed and available as `python3` (or `python3.13` on this system).
-- `pip` available for installing packages.
+---
 
-## Create a virtual environment
-Run the following to create a venv named `backend_venv` in the current folder:
+## 🚀 Project Setup
 
-```bash
-python3 -m venv backend_venv
-```
+### Prerequisites
+- **Python 3.11+** (3.13 recommended)
+- **PostgreSQL 12+**
+- `pip` for package management
 
-Activate the venv (macOS / Linux):
+### 1. Create Virtual Environment
 
 ```bash
-source backend_venv/bin/activate
+# Create a new virtual environment
+python3 -m venv fastapienv
+
+# Activate it (macOS/Linux)
+source fastapienv/bin/activate
+
+# Or on Windows PowerShell
+.\fastapienv\Scripts\Activate.ps1
 ```
 
-On Windows (PowerShell):
-
-```powershell
-.\\backend_venv\\Scripts\\Activate.ps1
-```
-
-Note: this repository includes a `backend_venv` directory. You can either use that existing environment or create a new one as shown above. Creating your own venv keeps your setup reproducible.
-
-## Install dependencies
-If a `requirements.txt` is present, install with:
+### 2. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-To generate `requirements.txt` from your active environment (after installing everything you need):
+**To generate `requirements.txt` from your current environment:**
 
 ```bash
 pip freeze > requirements.txt
 ```
 
-## Environment variables
-This project typically uses a `.env` file for secrets and runtime config (database URL, JWT keys, etc.). Create a `.env` in the repo root and add values required by `core/config.py` (or the code that reads env vars). Example keys you might need:
+### 3. Configure Environment Variables
 
-- `DATABASE_URL`
-- `SECRET_KEY` or `JWT_SECRET`
-- `ENV` (development / production)
+Create a `.env` file in the project root:
 
-Load `.env` automatically by the app (the codebase likely uses `python-dotenv`).
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=your_database
 
-## Running the app (development)
-With the venv activated and dependencies installed, run:
+# Security
+JWT_SECRET_KEY=your-super-secret-key-change-in-production
+JWT_ALGORITHM=HS256
+
+# Environment
+ENVIRONMENT=development
+```
+
+### 4. Initialize Database
 
 ```bash
+# Using SQL script (fastest)
+psql -U postgres -d your_database -f scripts/init_schemas.sql
+
+# OR using Alembic migrations
+alembic upgrade head
+```
+
+### 5. Run the Application
+
+```bash
+# Development with auto-reload
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-If `uvicorn` is installed inside `backend_venv`, use the venv binary path, e.g. `backend_venv/bin/uvicorn main:app --reload`.
+Visit `http://localhost:8000/docs` for interactive API documentation.
 
-## Quick checks and tests
-- Ensure the venv is active: `which python` (should point inside `backend_venv`)
-- Visit `http://127.0.0.1:8000/docs` for the automatic FastAPI docs (if app is running).
+---
 
-## Project structure and what each folder/file does
+## 🏗️ Architecture
 
-- `main.py` — Application entrypoint where the FastAPI `app` instance is created and middleware/routers are mounted.
-- `__init__.py` — Package marker files.
+### Database Schema
 
-- `api/` — HTTP API layer. Contains dependency injection helpers and versioned routes.
-  - `api/deps.py` — Common dependency providers for routes.
-  - `api/v1/routes/` — Route modules (for v1 of the public API). Example: `auth.py` contains authentication endpoints.
+**Public Schema** (Global):
+```
+users
+├── id, first_name, last_name, email, password_hash
+├── status, created_at, updated_at
+└── Indexes: email, email+status
 
-- `core/` — Core app configuration and low-level helpers.
-  - `core/config.py` — Centralized configuration (reads env vars, default settings).
-  - `core/database.py` — Database connection setup and session helpers.
-  - `core/security.py` — Security helpers (password hashing, token helpers).
+organizations
+├── id, name, slug, description, owner_id
+├── status, created_at, updated_at
+└── Indexes: slug, owner_id, slug+status
+```
 
-- `models/` — ORM models (database table definitions). Example: `user.py` defines the `User` model.
+**Tenant Schemas** (One per Organization):
+```
+Schema name: {organization_uuid_with_underscores}
 
-- `schemas/` — Pydantic models for request/response validation and serialization (e.g., `auth.py` schemas for login/signup).
+org_users (per-organization members)
+├── id, user_id (FK to public.users), email, first_name, last_name
+├── role_type (0=member, 1=admin, 2=owner)
+├── status, joined_at, updated_at
+└── Unique: user_id (one per user per org)
 
-- `repositories/` — Data access layer. Encapsulates database queries and persistence logic (e.g., `user_repo.py`).
+roles (organization-specific roles)
+├── id, name, description
+├── permissions (PostgreSQL array)
+└── created_at, updated_at
 
-- `services/` — Business logic layer. Implements higher-level operations (e.g., `auth_service.py` for login, token creation).
+user_org_roles (user-role assignments)
+├── id, user_id, role_id, assigned_at
+└── Unique: user_id + role_id
+```
 
-- `policies/` — Authorization and business-rule policies (if present) used by services or route guards.
+### Request Flow
 
-- `utils/` — Utility functions and helpers used across the codebase.
+```
+Request → AuthMiddleware
+    ↓
+  (Validate JWT, set accessTokenData)
+    ↓
+TenantMiddleware
+    ↓
+  (Extract orgId, fetch org, set currentOrg context)
+    ↓
+Route Handler
+    ↓
+  (Use get_db() for tenant schema OR get_public_db())
+    ↓
+Database Query
+    ↓
+Response
+```
 
-- `migrations/` — Database migration files (if the project uses Alembic or similar). Keep migrations here.
+### Token Evolution
 
-- `backend_venv/` — A bundled virtual environment. You can use it directly, but creating your own `backend_venv` is recommended.
+**User Login (No Organization)**:
+```json
+{
+  "sub": "user-uuid",
+  "email": "user@example.com",
+  "exp": 1234567890
+}
+```
 
-## Notes & best practices
-- Prefer creating your own venv to avoid modifying the included `backend_venv`.
-- Keep secrets out of the repository — use `.env` files or a secret manager and add `.env` to `.gitignore`.
-- Add or update `requirements.txt` after installing packages so other contributors can reproduce your environment.
-
-## Helpful commands summary
-
-```bash
-# create venv
-python3 -m venv backend_venv
-source backend_venv/bin/activate
-
-# install deps
-pip install -r requirements.txt
-
-# run dev server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# freeze current env
-pip freeze > requirements.txt
+**After Switching to Organization**:
+```json
+{
+  "sub": "user-uuid",
+  "email": "user@example.com",
+  "orgId": "org-uuid",
+  "exp": 1234567890
+}
 ```
 
 ---
-If you'd like, I can also generate a `requirements.txt` from the existing `backend_venv` or tune the README to include exact env variable names expected by `core/config.py`.
+
+## 📁 Project Structure
+
+```
+backend/
+├── main.py                           # FastAPI app entry point
+│
+├── api/
+│   ├── deps.py                      # Dependency injection (db functions)
+│   └── v1/
+│       └── routes/
+│           ├── auth.py              # Authentication endpoints
+│           ├── organizations.py      # Organization endpoints
+│           └── roles.py              # Role management endpoints
+│
+├── models/
+│   ├── user.py                      # User model (public schema)
+│   ├── organization.py               # Organization model
+│   ├── org_user.py                   # OrgUser model (tenant schema)
+│   ├── role.py                       # Role model (tenant schema)
+│   └── user_org_role.py              # UserOrgRole model (tenant schema)
+│
+├── repositories/
+│   ├── user_repo.py                 # User data access
+│   ├── organization_repo.py          # Organization data access
+│   ├── org_user_repo.py              # OrgUser data access (tenant)
+│   └── role_repo.py                  # Role data access (tenant)
+│
+├── services/
+│   ├── auth_service.py              # Authentication business logic
+│   ├── organization_service.py       # Organization business logic
+│   └── permission_service.py         # Permission/role logic
+│
+├── core/
+│   ├── config.py                    # Configuration from env vars
+│   ├── database.py                  # Database connection & schema mgmt
+│   ├── security.py                  # Password hashing, token creation
+│   ├── exception_handlers.py         # Global error handlers
+│   ├── logger.py                    # Logging setup
+│   └── middleware/
+│       ├── auth_middleware.py       # JWT validation
+│       └── tenant_middleware.py     # Tenant context setup
+│
+├── schemas/
+│   └── auth.py                      # Request/response schemas
+│
+├── utils/
+│   ├── response.py                  # Standard response format
+│   ├── token_data.py                # Token parsing utilities
+│   └── date_time.py                 # Date/time utilities
+│
+├── migrations/                       # Alembic migration files
+├── scripts/
+│   └── init_schemas.sql             # Database initialization script
+│
+├── requirements.txt                 # Python dependencies
+├── .env.example                     # Example environment variables
+└── README.md                        # This file
+```
+
+---
+
+## 📊 Environment Variables Reference
+
+```env
+# PostgreSQL Configuration
+DB_HOST=localhost          # Database host
+DB_PORT=5432             # Database port
+DB_USER=postgres         # Database user
+DB_PASSWORD=password     # Database password
+DB_NAME=your_database    # Database name
+
+# Security
+JWT_SECRET_KEY=secret    # JWT signing key (change in production!)
+JWT_ALGORITHM=HS256      # JWT algorithm
+
+# Runtime
+ENVIRONMENT=development  # development or production
+```

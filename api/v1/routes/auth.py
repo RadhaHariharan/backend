@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_db
+from api.deps import get_public_db
 from schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from services.auth_service import AuthService
 from utils.response import send_custom_response, HttpError
@@ -14,7 +14,7 @@ router = APIRouter(
 @router.post("/login", response_model=TokenResponse)
 async def login(
     payload: LoginRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_public_db)
 ):
     """
     Async Login endpoint:
@@ -43,7 +43,7 @@ async def login(
 @router.post("/register", response_model=UserResponse)
 async def register(
     payload: RegisterRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_public_db)
 ):
     """
     Register endpoint:
