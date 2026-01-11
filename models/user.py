@@ -39,7 +39,7 @@ class User(Base):
     zipcode = Column(String(20), nullable=False)
 
     # Security
-    password_hash = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=False)
 
     # Audit timestamps (UTC)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
