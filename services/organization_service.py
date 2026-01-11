@@ -3,7 +3,7 @@ import uuid
 from typing import List, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from models.organization import Organization
+from models.families import Organization
 from models.org_user import OrgUser
 from repositories.organization_repo import OrganizationRepository
 from repositories.org_user_repo import OrgUserRepository

@@ -6,7 +6,7 @@ from sqlalchemy import select, text
 import uuid
 
 from core.database import SessionLocal
-from models.organization import Organization
+from models.families import Organization
 from core.middleware.auth_middleware import accessTokenData
 
 # Context variable to hold current organization

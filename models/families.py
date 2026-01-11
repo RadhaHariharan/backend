@@ -1,30 +1,28 @@
 import uuid
-from sqlalchemy import Column, String, SmallInteger, DateTime, Index, Text
+from sqlalchemy import Column, ForeignKey, String, SmallInteger, DateTime, Index, Text
 from sqlalchemy.dialects.postgresql import UUID
 from core.database import Base
+from core.database_mixins import AuditMixin
+from models.user import User
 from utils.date_time import utc_now
 
 
-class Organization(Base):
-    __tablename__ = "organizations"
+class Family(Base, AuditMixin):
+    __tablename__ = "families"
     __table_args__ = {"schema": "public"}
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     
-    # Organization info
+    # Family info
     name = Column(String(255), nullable=False)
     slug = Column(String(100), unique=True, nullable=False, index=True)
     description = Column(Text, nullable=True)
     
     # Owner
-    owner_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey(User.__table__.c.id), nullable=False, index=True)
     
     # Status: 0 = inactive, 1 = active, 2 = suspended
     status = Column(SmallInteger, default=1, nullable=False)
-    
-    # Audit
-    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     __table_args__ = (
         Index("ix_organizations_owner_id", "owner_id"),
@@ -33,7 +31,7 @@ class Organization(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Organization id={self.id} name={self.name}>"
+        return f"<Family id={self.id} name={self.name}>"
     
     @property
     def is_active(self) -> bool:
