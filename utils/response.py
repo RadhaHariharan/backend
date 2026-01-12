@@ -7,10 +7,10 @@ class HttpError(Exception):
     """
     Custom exception for HTTP errors
     """
-    def __init__(self, status_code: int, message: str, error: str = ""):
+    def __init__(self, status_code: int, message: str, error_code: str = ""):
         self.status_code = status_code
         self.message = message
-        self.error = error
+        self.error_code = error_code
         super().__init__(message)
 
 
@@ -38,7 +38,7 @@ def send_error_response(err: Exception):
             content={
                 "message": err.message,
                 "statusCode": err.status_code,
-                "error": err.error
+                "error": err.error_code
             }
         )
     else:

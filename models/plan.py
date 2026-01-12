@@ -32,7 +32,7 @@ class Plan(Base):
     
     # Features
     max_features = Column(String(100))  # JSON string of max counts: {"users": 10, "projects": 5}
-    metadata = Column(JSONB, default={})  # Stripe price IDs, etc.
+    plan_metadata = Column(JSONB, default={})  # Stripe price IDs, etc.
     
     # Status
     is_active = Column(Boolean, default=True)
@@ -54,5 +54,5 @@ class Plan(Base):
             "billing_interval": self.billing_interval,
             "is_active": self.is_active,
             "is_featured": self.is_featured,
-            "metadata": self.metadata
+            "plan_metadata": self.plan_metadata
         }

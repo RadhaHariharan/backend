@@ -1,8 +1,6 @@
 import uvicorn
 from fastapi import FastAPI, Request
 from api.v1 import router as v1_router
-from api.v1.routes.organizations import router as org_router
-from api.v1.routes.roles import router as role_router
 from core.exception_handlers import setup_exception_handlers, logger
 from core.middleware.auth_middleware import AuthMiddleware
 from core.middleware.tenant_middleware import TenantMiddleware
@@ -54,8 +52,6 @@ async def global_exception_handler(request: Request, exc: Exception):
     return send_error_response(exc)
 
 # --- API Routes ---
-app.include_router(org_router, prefix="/api/v1")   # Org management (public schema)
-app.include_router(role_router, prefix="/api/v1")  # Roles (tenant schema)
 app.include_router(v1_router, prefix="/api/v1")    # Auth routes
 
 if __name__ == "__main__":

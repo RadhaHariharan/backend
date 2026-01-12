@@ -40,7 +40,7 @@ class Feature(Base):
     trial_period_days = Column(Integer, default=0)  # Trial days for this feature
     
     # Configuration
-    metadata = Column(JSONB, default={})  # {stripe_price_id, unit: 'api_calls', etc}
+    feature_metadata = Column(JSONB, default={})  # {stripe_price_id, unit: 'api_calls', etc}
     customizable = Column(Boolean, default=True)  # Can price/limit be customized per org?
     
     # Status

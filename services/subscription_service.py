@@ -477,7 +477,7 @@ class SubscriptionService:
             subscription.auto_renew = False
         
         if reason:
-            subscription.metadata['cancellation_reason'] = reason
+            subscription.subscription_metadata['cancellation_reason'] = reason
         
         await self.db.commit()
 

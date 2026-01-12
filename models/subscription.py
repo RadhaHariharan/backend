@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Numeric, Boolean, TIMESTAMP, Text, Integer, ForeignKey, CheckConstraint
+from sqlalchemy import Column, String, Numeric, Boolean, TIMESTAMP, Text, Integer, ForeignKey, CheckConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 import uuid
 from datetime import datetime, timezone
@@ -14,7 +14,8 @@ class PlanFeature(Base):
     """
     __tablename__ = "plan_features"
     __table_args__ = (
-        {"schema": "public", "unique": ("plan_id", "feature_id")}
+        UniqueConstraint('plan_id', 'feature_id'),
+        {"schema": "public"}
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -71,7 +72,7 @@ class Subscription(Base):
     # Configuration
     auto_renew = Column(Boolean, default=True)
     send_invoices = Column(Boolean, default=True)
-    metadata = Column(JSONB, default={})  # Custom data, notes, etc.
+    subscription_metadata = Column(JSONB, default={})  # Custom data, notes, etc.
     
     # Dates
     created_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
@@ -104,7 +105,8 @@ class SubscriptionAddon(Base):
     """
     __tablename__ = "subscription_addons"
     __table_args__ = (
-        {"schema": "public", "unique": ("subscription_id", "feature_id")}
+        UniqueConstraint('subscription_id', 'feature_id'),
+        {"schema": "public"}
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -185,7 +187,7 @@ class Discount(Base):
     
     # Status
     is_active = Column(Boolean, default=True)
-    metadata = Column(JSONB, default={})
+    discount_metadata = Column(JSONB, default={})
     
     created_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -243,7 +245,8 @@ class FeatureUsage(Base):
     """
     __tablename__ = "feature_usage"
     __table_args__ = (
-        {"schema": "public", "unique": ("org_id", "feature_id", "period_start")}
+        UniqueConstraint('org_id', 'feature_id', 'period_start'),
+        {"schema": "public"}
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -262,7 +265,7 @@ class FeatureUsage(Base):
     # Configuration
     reset_warning_sent = Column(Boolean, default=False)
     exceeded_notification_sent = Column(Boolean, default=False)
-    metadata = Column(JSONB, default={})  # {last_reset, overage_allowed, etc}
+    usage_metadata = Column(JSONB, default={})  # {last_reset, overage_allowed, etc}
     
     created_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
