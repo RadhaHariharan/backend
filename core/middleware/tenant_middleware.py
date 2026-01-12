@@ -6,11 +6,11 @@ from sqlalchemy import select, text
 import uuid
 
 from core.database import SessionLocal
-from models.families import Organization
+from models.families import Family
 from core.middleware.auth_middleware import accessTokenData
 
 # Context variable to hold current organization
-currentOrg: contextvars.ContextVar[Organization] = contextvars.ContextVar("currentOrg", default=None)
+currentOrg: contextvars.ContextVar[Family] = contextvars.ContextVar("currentOrg", default=None)
 
 
 class TenantMiddleware(BaseHTTPMiddleware):

@@ -1,12 +1,12 @@
 from models.user import User
-from models.families import Organization
+from models.families import Family
 from models.org_user import OrgUser
 from models.role import Role
 from models.user_org_role import UserOrgRole
 
 __all__ = [
     "User",
-    "Organization",
+    "Family",
     "OrgUser",
     "Role",
     "UserOrgRole",

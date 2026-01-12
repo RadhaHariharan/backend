@@ -3,7 +3,7 @@ import uuid
 from typing import List, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from models.families import Organization
+from models.families import Family
 from models.org_user import OrgUser
 from repositories.organization_repo import OrganizationRepository
 from repositories.org_user_repo import OrgUserRepository
@@ -31,7 +31,7 @@ class OrganizationService:
         owner_id: str,
         description: str = None,
         slug: str = None
-    ) -> Organization:
+    ) -> Family:
         """
         Create a new organization
         
@@ -65,7 +65,7 @@ class OrganizationService:
             raise HttpError(400, "Owner user not found", "USER_NOT_FOUND")
         
         # Create organization in public schema
-        org = Organization(
+        org = Family(
             name=name,
             slug=slug,
             description=description,
@@ -107,7 +107,7 @@ class OrganizationService:
         
         return org
 
-    async def get_organization(self, org_id: str) -> Organization:
+    async def get_organization(self, org_id: str) -> Family:
         """Get organization by ID"""
         org = await self.org_repo.get_by_id(org_id)
         if not org:
