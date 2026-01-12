@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy import (
     Column,
     ForeignKey,
+    Integer,
     SmallInteger,
     String,
     DateTime,
@@ -31,16 +32,16 @@ class User(Base):
     last_name = Column(String(100), nullable=False)
 
     # Contact
-    country_code = Column(SmallInteger, ForeignKey(Country.__table__.c.id), nullable=False)
+    country_code = Column(SmallInteger, ForeignKey(Country.__table__.c.id), nullable=False)  # usually fine
     mobile_number = Column(String(15), nullable=False)     # stored as string
     email = Column(String(255), unique=True, nullable=False)
 
     # Address
     address_line_1 = Column(String(255), nullable=False)
     address_line_2 = Column(String(255), nullable=True)
-    city = Column(SmallInteger, ForeignKey(City.__table__.c.id), nullable=False)
-    state = Column(SmallInteger, ForeignKey(State.__table__.c.id), nullable=False)
-    country = Column(SmallInteger, ForeignKey(Country.__table__.c.id), nullable=False)
+    city = Column(Integer, ForeignKey(City.__table__.c.id), nullable=False)
+    state = Column(Integer, ForeignKey(State.__table__.c.id), nullable=False)
+    country = Column(Integer, ForeignKey(Country.__table__.c.id), nullable=False)
     zipcode = Column(String(10), nullable=False)
 
     # Security

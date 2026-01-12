@@ -1,44 +1,34 @@
-from passlib.context import CryptContext
 import uuid
 from jose import jwt
 from datetime import timedelta
 from typing import Optional
 from core.config import settings
 from utils.date_time import utc_now
-
-
-#: Passlib cryptographic context for password hashing
-#: Uses bcrypt as the hashing algorithm
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
-)
+import bcrypt
 
 
 def create_access_token(data: dict, org_id: Optional[str] = None) -> str:
     """
-    Create a JWT access token.
+    Generate a short-lived JWT access token for authentication.
 
-    The access token is short-lived and intended for authenticating
-    API requests. UUID values in the payload are automatically
-    converted to strings to ensure JSON serialization compatibility.
+    The access token is used to authenticate API requests. Any UUID values
+    in the payload are automatically converted to strings for JSON serialization.
 
     Args:
-        data (dict):
-            Token payload. Must include the `sub` claim representing
-            the user identifier. Values may include UUID objects.
-        org_id (Optional[str]):
-            Optional organization UUID to scope the token.
-            If provided, it will be embedded as `orgId`.
+        data (dict): 
+            Dictionary containing token claims. Must include a `sub` claim
+            representing the user identifier. Can include UUID values.
+        org_id (Optional[str]): 
+            Optional organization UUID to scope the token. If provided, 
+            it will be added to the payload as `orgId`.
 
     Returns:
-        str:
-            Encoded JWT access token.
+        str: Encoded JWT access token.
 
     Notes:
-        - Token expiration is fixed at 15 minutes.
+        - Token expiration is set to 15 minutes from the time of creation.
         - Uses the secret key and algorithm defined in application settings.
-        - All UUID values are converted to strings before encoding.
+        - UUID values in the payload are converted to strings for JSON compatibility.
     """
     payload = data.copy()
 
@@ -59,31 +49,25 @@ def create_access_token(data: dict, org_id: Optional[str] = None) -> str:
     )
 
 
-def create_refresh_token(
-    user_id: uuid.UUID,
-    org_id: Optional[str] = None
-) -> str:
+def create_refresh_token(user_id: uuid.UUID, org_id: Optional[str] = None) -> str:
     """
-    Create a JWT refresh token.
+    Generate a long-lived JWT refresh token.
 
-    Refresh tokens are long-lived and used to obtain new access tokens
-    without requiring the user to re-authenticate.
+    Refresh tokens are used to obtain new access tokens without requiring
+    the user to re-authenticate. The `sub` claim always contains the
+    user ID as a string.
 
     Args:
-        user_id (uuid.UUID):
-            Unique identifier of the user.
-        org_id (Optional[str]):
-            Optional organization UUID to scope the token.
-            If provided, it will be embedded as `orgId`.
+        user_id (uuid.UUID): Unique identifier of the user.
+        org_id (Optional[str]): Optional organization UUID to scope the token.
+            If provided, it will be added to the payload as `orgId`.
 
     Returns:
-        str:
-            Encoded JWT refresh token.
+        str: Encoded JWT refresh token.
 
     Notes:
-        - Token expiration is fixed at 30 days.
-        - The `sub` claim always contains the user ID as a string.
-        - Uses the same signing key and algorithm as access tokens.
+        - Token expiration is set to 30 days from the time of creation.
+        - Uses the same secret key and algorithm as access tokens.
     """
     payload = {
         "sub": str(user_id),
@@ -104,22 +88,23 @@ def hash_password(password: str) -> str:
     """
     Hash a plaintext password using bcrypt.
 
-    This function uses Passlib's CryptContext to generate a secure,
-    salted bcrypt hash suitable for persistent storage.
+    This function generates a secure, salted bcrypt hash suitable for storage.
+    The password is first encoded to UTF-8 bytes before hashing.
 
     Args:
-        password (str):
-            Plaintext password provided by the user.
+        password (str): Plaintext password provided by the user.
 
     Returns:
-        str:
-            Bcrypt-hashed password.
+        str: Bcrypt-hashed password as a UTF-8 string.
 
-    Security:
-        - Automatically handles salt generation.
-        - Resistant to rainbow table and brute-force attacks.
+    Notes:
+        - Automatically generates a salt using bcrypt.
+        - Safe for persistent storage.
+        - Passwords longer than 72 bytes are truncated internally by bcrypt.
     """
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashedBytes = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashedBytes.decode('utf-8')
 
 
 def verify_password(plain: str, hashed: str) -> bool:
@@ -127,17 +112,15 @@ def verify_password(plain: str, hashed: str) -> bool:
     Verify a plaintext password against a stored bcrypt hash.
 
     Args:
-        plain (str):
-            Plaintext password provided by the user.
-        hashed (str):
-            Stored bcrypt hash retrieved from the database.
+        plain (str): Plaintext password provided by the user.
+        hashed (str): Stored bcrypt hash retrieved from the database.
 
     Returns:
-        bool:
-            True if the password matches the hash, False otherwise.
+        bool: True if the password matches the hash, False otherwise.
 
     Notes:
-        - Uses constant-time comparison internally.
+        - Both the plaintext and hash are encoded to UTF-8 bytes for verification.
         - Safe against timing attacks.
+        - Passwords longer than 72 bytes are truncated internally by bcrypt.
     """
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
