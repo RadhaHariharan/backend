@@ -231,7 +231,7 @@ class MigrationAnalyzer:
         type_mappings = {
             'INTEGER': ['INTEGER', 'INT', 'SERIAL'],
             'VARCHAR': ['VARCHAR', 'CHARACTER VARYING'],
-            'TIMESTAMP': ['TIMESTAMP', 'TIMESTAMP WITHOUT TIME ZONE', 'TIMESTAMP WITH TIME ZONE'],
+            'TIMESTAMP': ['TIMESTAMP', 'TIMESTAMP WITHOUT TIME ZONE', 'TIMESTAMP WITH TIME ZONE', 'DATETIME'],
             'BOOLEAN': ['BOOLEAN', 'BOOL'],
             'UUID': ['UUID'],
             'NUMERIC': ['NUMERIC', 'DECIMAL'],
@@ -443,8 +443,11 @@ class MigrationExecutor:
             return "TEXT"
         elif 'BOOLEAN' in type_str:
             return "BOOLEAN"
-        elif 'TIMESTAMP' in type_str:
-            return "TIMESTAMP WITH TIME ZONE"
+        elif 'TIMESTAMP' in type_str or 'DATETIME' in type_str:
+            # Check if it should be timezone aware
+            if hasattr(col_type, 'timezone') and col_type.timezone:
+                return "TIMESTAMP WITH TIME ZONE"
+            return "TIMESTAMP WITHOUT TIME ZONE"
         elif 'NUMERIC' in type_str or 'DECIMAL' in type_str:
             return "NUMERIC(10, 2)"
         elif 'ARRAY' in type_str:
