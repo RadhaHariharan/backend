@@ -2,14 +2,37 @@ from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from typing_extensions import Annotated
 from typing import Optional
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(..., max_length=72, description="Password must be 72 characters or less")
-
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from typing_extensions import Annotated
 from typing import Optional
 
+class LoginRequest(BaseModel):
+    """
+    Schema for user login.
+    Uses `typing.Annotated` for consistent metadata and validation.
+    """
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "email": "john.doe@example.com",
+                "password": "Admin@123"
+            }
+        }
+    )
+
+    email: Annotated[
+        EmailStr,
+        Field(description="Registered email address")
+    ]
+    
+    password: Annotated[
+        str,
+        Field(
+            max_length=72, # Consistent with bcrypt limits used in Register
+            description="User password"
+        )
+    ]
 
 class RegisterRequest(BaseModel):
     """
@@ -107,6 +130,3 @@ class TokenResponse(BaseModel):
 
 class RegisterResponse(BaseModel):
     id: str
-    
-    class Config:
-        from_attributes = True
