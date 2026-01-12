@@ -33,10 +33,8 @@ async def login(
         return send_custom_response(tokens, success_message="Login successful")
 
     except ValueError:
-        # --- Invalid credentials ---
         raise HttpError(401, "Invalid email or password", "INVALID_CREDENTIALS")
     except Exception as e:
-        # --- Any other unexpected error ---
         raise HttpError(500, "Internal Server Error", str(e))
 
 
